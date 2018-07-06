@@ -64,7 +64,7 @@ async function start() {
 
 		apiServer.route([
 			{
-				method: 'GET', path: '/birds',
+				method: 'GET', path: '/birds', config: { auth: false },
 				handler: (request, h) => {
 					const getOperation = Knex('birds').where({ isPublic: true }).select(
 						'name', 'species', 'picture_url'
@@ -87,6 +87,7 @@ async function start() {
 					}).catch((err) => {
 						return (err);
 					});
+					return getOperation;
 				}
 			},
 			{
@@ -119,38 +120,8 @@ async function start() {
 					}).catch((err) => {
 						return (err);
 					});
-				}
-			}{
-				path: '/auth',
-				method: 'POST',
-				handler: (request, h) => {
-					const { username, password } = request.payload;
-					const getOperation = Knex('users').where({ username }).select(
-						'guid', 'password'
-					).then(([user]) => {
-						if (!user) {
-							return ({
-								error: true,
-								message: 'the specified user was not found'
-							});
-						}
 
-						if (user.password == password) {
-							const token = jwt.sign({ username, scope: user.guid }, PRIVATE_KEY, { algorithm: 'HS256', expiresIn: '1h' });
-							return ({ token, scope: user.guid });
-						} else {
-							return ('incorrect password');
-						}
-
-						return ({
-							error: false,
-							message: '',
-							dataCount: results.length,
-							data: results
-						});
-					}).catch((err) => {
-						return (err);
-					});
+					return getOperation;
 				}
 			},
 			{
