@@ -1,6 +1,7 @@
 import Hapi from 'hapi';
 import Knex from './knex';
 import jwt from 'jsonwebtoken';
+import { JWT2Validate } from './jwt2_validate';
 
 // define some constants to make life easier
 const DEFAULT_HOST = "localhost";
@@ -20,15 +21,6 @@ const apiServer = Hapi.server({
 	port: parseInt(process.env.PORT, RADIX) || DEFAULT_PORT2
 });
 
-// Add the route
-apiServer.route({
-	method: 'GET',
-	path: '/hello',
-	handler: (request, reply) => {
-		return 'hello world';
-	}
-});
-
 const accounts = { // our "users database"
     9999: {
       id: 9999,
@@ -36,28 +28,15 @@ const accounts = { // our "users database"
     }
 };
 
-// bring your own validation function
-const validateFunc = async function (decoded, request) {
-
-    // do your checks to see if the person is valid
-    if (!accounts[decoded.id]) {
-      return { isValid: false };
-    }
-    else {
-      return { isValid: true };
-    }
-};
-
-const token = jwt.sign( { id: 9999, 'name': 'Avengers'}, PRIVATE_KEY, { algorithm: 'HS256', expiresIn: '1h'} );
-
 // Start the server
 async function start() {
 
 	try {
 		await apiServer.register(require('hapi-auth-jwt2'));
+
 		apiServer.auth.strategy('jwt', 'jwt', {
 			key: PRIVATE_KEY,
-			validate: validateFunc,
+			validate: JWT2Validate,
 			verifyOptions: { algorithms: ['HS256'] }
 		});
 		apiServer.auth.default('jwt');
@@ -91,24 +70,18 @@ async function start() {
 				}
 			},
 			{
-				method: 'POST', path: '/auth',
+				method: 'GET', path: '/users', config: { auth: false },
 				handler: (request, h) => {
-					const { username, password } = request.payload;
-					const getOperation = Knex('users').where({ username }).select(
-						'guid', 'password'
-					).then(([user]) => {
-						if (!user) {
+					const getOperation = Knex('users').select(
+						'username', 'guid'
+					).then((results) => {
+						if (!results || results.length === 0) {
 							return ({
 								error: true,
-								message: 'the specified user was not found'
+								message: 'no users found',
+								dataCount: 0,
+								data: []
 							});
-						}
-
-						if (user.password == password) {
-							const token = jwt.sign({ username, scope: user.guid }, PRIVATE_KEY, { algorithm: 'HS256', expiresIn: '1h' });
-							return ({ token, scope: user.guid });
-						} else {
-							return ('incorrect password');
 						}
 
 						return ({
@@ -120,14 +93,50 @@ async function start() {
 					}).catch((err) => {
 						return (err);
 					});
-
 					return getOperation;
+				}
+			},
+			{
+				method: 'GET', path: '/auth', config: { auth: false },
+				handler: (request, h) => {
+					const token = jwt.sign( { guid: 'g04aca6c-b001-3346-bcd7-120b7e87998e', username: 'pika100'}, PRIVATE_KEY, { algorithm: 'HS256', expiresIn: '1h'} );
+
+					return ({ message: 'Authenticated! Here is the token: ' + token });
+					// const { username, password } = request.payload;
+					// const getOperation = Knex('users').where({ username }).select(
+					// 	'guid', 'password'
+					// ).then(([user]) => {
+					// 	if (!user) {
+					// 		return ({
+					// 			error: true,
+					// 			message: 'the specified user was not found'
+					// 		});
+					// 	}
+
+					// 	if (user.password == password) {
+					// 		const token = jwt.sign({ username, scope: user.guid }, PRIVATE_KEY, { algorithm: 'HS256', expiresIn: '1h' });
+					// 		return ({ token, scope: user.guid });
+					// 	} else {
+					// 		return ('incorrect password');
+					// 	}
+
+					// 	return ({
+					// 		error: false,
+					// 		message: '',
+					// 		dataCount: results.length,
+					// 		data: results
+					// 	});
+					// }).catch((err) => {
+					// 	return (err);
+					// });
+
+					// return getOperation;
 				}
 			},
 			{
 				method: 'GET', path: '/', config: { auth: false },
 				handler: (request, h) => {
-					return({ text: 'Token not required. I give one to you : ' + token });
+					return({ message: 'Token not required' });
 				}
 			},
 			{
