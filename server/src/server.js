@@ -2,6 +2,7 @@ import Hapi from 'hapi';
 import Knex from './knex';
 import jwt from 'jsonwebtoken';
 import { JWT2Validate } from './jwt2_validate';
+import Path from 'path';
 
 // define some constants to make life easier
 const DEFAULT_HOST = "localhost";
@@ -32,7 +33,20 @@ const accounts = { // our "users database"
 async function start() {
 
 	try {
+		await httpServer.register(require('inert'));
 		await apiServer.register(require('hapi-auth-jwt2'));
+		console.log(Path.join(__dirname, 'client/dist/client'));
+		console.log(Path.resolve('./'));
+		httpServer.route({
+			method: 'GET',
+			path: '/{param*}',
+			handler: {
+				directory: {
+					path: Path.join(Path.resolve('./'), 'client/dist/client'),
+					index: ['index.html']
+				}
+			}
+		});
 
 		apiServer.auth.strategy('jwt', 'jwt', {
 			key: PRIVATE_KEY,
@@ -150,7 +164,7 @@ async function start() {
 			}
 		]);
 
-		//await httpServer.start();
+		await httpServer.start();
 		await apiServer.start();
 	}
 	catch (err) {
@@ -159,7 +173,7 @@ async function start() {
 		process.exit(1);
 	}
 
-	//console.log('Server running at:', httpServer.info.uri);
+	console.log('Server running at:', httpServer.info.uri);
 	console.log('Server running at:', apiServer.info.uri);
 };
 
