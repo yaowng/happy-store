@@ -35,8 +35,8 @@ async function start() {
 	try {
 		await httpServer.register(require('inert'));
 		await apiServer.register(require('hapi-auth-jwt2'));
-		console.log(Path.join(__dirname, 'client/dist/client'));
-		console.log(Path.resolve('./'));
+		// console.log(Path.join(__dirname, 'client/dist/client'));
+		// console.log(Path.resolve('./'));
 		httpServer.route({
 			method: 'GET',
 			path: '/{param*}',
