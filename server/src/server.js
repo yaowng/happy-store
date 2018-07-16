@@ -14,7 +14,11 @@ const PRIVATE_KEY = 'Zc4Rt356LokjMnTuiS9LpofDsAqzXc'
 const httpServer = Hapi.server({
 	host: process.env.HOST || DEFAULT_HOST,
 	port: parseInt(process.env.PORT, RADIX) || DEFAULT_PORT1,
-	app: {}
+	routes: {
+		files: {
+			relativeTo: Path.join(Path.resolve('./'), 'client/dist/client')
+		}
+	}
 });
 
 const apiServer = Hapi.server({
@@ -39,14 +43,29 @@ async function start() {
 		// console.log(Path.resolve('./'));
 		httpServer.route({
 			method: 'GET',
-			path: '/{param*}',
+			path: '/{path*}',
 			handler: {
+				// file: 'index.html'
 				directory: {
-					path: Path.join(Path.resolve('./'), 'client/dist/client'),
-					index: ['index.html']
+					path: '.',
+					redirectToSlash: true,
+					lookupCompressed: true,
+					index: true
 				}
 			}
 		});
+
+		httpServer.ext('onPreResponse', (request, h) => {
+
+			const response = request.response;
+			if (response.isBoom &&
+					response.output.statusCode === 404) {
+	
+					return h.file('index.html');
+			}
+	
+			return h.continue;
+	});
 
 		apiServer.auth.strategy('jwt', 'jwt', {
 			key: PRIVATE_KEY,
