@@ -8,18 +8,24 @@ import { AccountLayoutComponent } from './_layouts/account.layout/account.layout
 
 import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './account/login/login.component';
+import { NotfoundComponent } from './notfound/notfound.component';
+
+import { HeroListComponent } from './heroes/hero-list.component';
 
 const routes: Routes = [
   { 
-    path: '', component: MainLayoutComponent, canActivate: [AuthGuard], 
-    children: [ { path: '', component: HomeComponent } ] 
+    path: '', component: MainLayoutComponent, 
+    children: [ 
+      { path: '', component: HomeComponent }, 
+      { path: 'heroes', component: HeroListComponent }
+    ] 
   },
   { 
     path: '', component: AccountLayoutComponent,
     children: [ { path: 'login', component: LoginComponent } ] 
   },
-  //{ path: '', pathMatch: 'full', redirectTo: '/home' }
-  { path: '**', redirectTo: '' }
+  { path: '', pathMatch: 'full', redirectTo: '' },
+  { path: '**', component: NotfoundComponent }
 ];
 
 @NgModule({
