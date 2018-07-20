@@ -10,14 +10,14 @@ import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './account/login/login.component';
 import { NotfoundComponent } from './notfound/notfound.component';
 
-import { HeroListComponent } from './heroes/hero-list.component';
+//import { HeroListComponent } from './heroes/hero-list.component';
 
 const routes: Routes = [
   { 
     path: '', component: MainLayoutComponent, 
     children: [ 
       { path: '', component: HomeComponent }, 
-      { path: 'heroes', component: HeroListComponent }
+      //{ path: 'heroes', component: HeroListComponent }
     ] 
   },
   { 
